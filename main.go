@@ -7,27 +7,29 @@ import (
 	"time"
 
 	"./waniclient"
-	"github.com/0xAX/notificator"
+	"github.com/TheCreeper/go-notify"
+
 	"github.com/kardianos/osext"
 )
 
 var clientAPIKey string
 var client *waniclient.WaniClient
+var notificationID uint32
 
 func checkQueue() {
 	queue := client.GetStudyQueue()
 
 	if queue != nil && queue.Reviews > 0 {
-		notify := notificator.New(notificator.Options{
-			AppName: "WaniKani",
-		})
 
 		folderPath, _ := osext.ExecutableFolder()
 
-		notify.Push("WaniKani",
-			fmt.Sprintf("%d reviews available!", queue.Reviews),
-			path.Join(folderPath, "wanikani.ico"),
-			notificator.UR_NORMAL)
+		ntf := notify.NewNotification("WaniKani", fmt.Sprintf("<b>%d</b> reviews available!", queue.Reviews))
+		ntf.AppName = "WaniKani-notify"
+		ntf.ReplacesID = notificationID
+		ntf.AppIcon = path.Join(folderPath, "wanikani.ico")
+		ntf.Actions = append(ntf.Actions, "default", "default")
+		ntf.Hints = make(map[string]interface{})
+		notificationID, _ = ntf.Show()
 	}
 }
 
@@ -41,7 +43,7 @@ func main() {
 
 	checkQueue()
 
-	timer := time.NewTicker(time.Minute * 10)
+	timer := time.NewTicker(time.Second * 10)
 	go func() {
 		for range timer.C {
 			checkQueue()
